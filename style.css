@@ -25,3 +25,11 @@ body {
   height: 2rem;
   width: 2rem;
 }
+
+.reveal {
+  background-color: red;
+}
+
+.hide {
+  color: transparent;
+}

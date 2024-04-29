@@ -3,6 +3,8 @@ const COL = 9;
 
 const gameBoard = document.querySelector(".game");
 
+const positionOfBombs = [];
+
 window.addEventListener("load", () => {
 	// generate bombs positions randomly
 	const bombPositionSet = generateBombs();
@@ -15,11 +17,17 @@ window.addEventListener("load", () => {
 			const colElement = document.createElement("li");
 
 			if (bombPositionSet.has(`${i},${j}`)) {
+				const position = 9 * i + j;
+				positionOfBombs.push(position);
 				colElement.textContent = "💣";
+				colElement.dataset.condition = "bomb";
+			} else {
+				colElement.dataset.condition = "empty";
 			}
 			colElement.dataset.row = i;
 			colElement.dataset.col = j;
 			colElement.classList.add("cell");
+			colElement.classList.add("hide");
 			rowElement.append(colElement);
 		}
 		gameBoard.append(rowElement);
@@ -32,6 +40,31 @@ window.addEventListener("load", () => {
 		const [row, col] = pos.split(",").map(Number);
 		generateInfos(row, col);
 	}
+
+	const visited = new Set();
+
+	// reveal empty cell when user click
+	cells.forEach((cell) => {
+		cell.addEventListener("click", (e) => {
+			const row = Number(e.target.dataset.row);
+			const col = Number(e.target.dataset.col);
+			if (
+				cell.dataset.condition === "empty" &&
+				!cell.classList.contains("reveal")
+			) {
+				revealEmptyCells(row, col, cells, visited);
+			}
+			if (cell.dataset.condition === "info") {
+				cell.classList.remove("hide");
+			}
+			if (cell.dataset.condition === "bomb") {
+				// reveal all bombs and end game
+				positionOfBombs.forEach((position) =>
+					cells[position].classList.remove("hide")
+				);
+			}
+		});
+	});
 });
 
 function generateBombs(bombsNumber = 10) {
@@ -60,6 +93,7 @@ function generateInfos(row, col) {
 				topElement.textContent = Number(content) + 1;
 			} else if (!content) {
 				topElement.textContent = 1;
+				topElement.dataset.condition = "info";
 			}
 		}
 	}
@@ -74,6 +108,7 @@ function generateInfos(row, col) {
 				bottomElement.textContent = Number(content) + 1;
 			} else if (!content) {
 				bottomElement.textContent = 1;
+				bottomElement.dataset.condition = "info";
 			}
 		}
 	}
@@ -88,6 +123,7 @@ function generateInfos(row, col) {
 				leftElement.textContent = Number(content) + 1;
 			} else if (!content) {
 				leftElement.textContent = 1;
+				leftElement.dataset.condition = "info";
 			}
 		}
 	}
@@ -102,6 +138,7 @@ function generateInfos(row, col) {
 				rightElement.textContent = Number(content) + 1;
 			} else if (!content) {
 				rightElement.textContent = 1;
+				rightElement.dataset.condition = "info";
 			}
 		}
 	}
@@ -116,6 +153,7 @@ function generateInfos(row, col) {
 				topRightElement.textContent = Number(content) + 1;
 			} else if (!content) {
 				topRightElement.textContent = 1;
+				topRightElement.dataset.condition = "info";
 			}
 		}
 	}
@@ -130,6 +168,7 @@ function generateInfos(row, col) {
 				topLeftElement.textContent = Number(content) + 1;
 			} else if (!content) {
 				topLeftElement.textContent = 1;
+				topLeftElement.dataset.condition = "info";
 			}
 		}
 	}
@@ -144,6 +183,7 @@ function generateInfos(row, col) {
 				bottomLeftElement.textContent = Number(content) + 1;
 			} else if (!content) {
 				bottomLeftElement.textContent = 1;
+				bottomLeftElement.dataset.condition = "info";
 			}
 		}
 	}
@@ -158,9 +198,45 @@ function generateInfos(row, col) {
 				bottomRightElement.textContent = Number(content) + 1;
 			} else if (!content) {
 				bottomRightElement.textContent = 1;
+				bottomRightElement.dataset.condition = "info";
 			}
 		}
 	}
+}
+
+function revealEmptyCells(row, col, grid, visited) {
+	if (visited.has(9 * row + col)) return;
+
+	const isRowBoundary = row >= 0 && row < ROW;
+	const isColBoundary = col >= 0 && col < COL;
+
+	if (!isRowBoundary || !isColBoundary) return;
+
+	const order = 9 * row + col;
+	visited.add(order);
+	const cell = grid[order];
+
+	if (!cell) return;
+
+	if (cell.dataset.condition === "empty") {
+		// reveal
+		cell.classList.add("reveal");
+		cell.classList.remove("hide");
+
+		// check top
+		revealEmptyCells(row - 1, col, grid, visited);
+
+		//check bottom
+		revealEmptyCells(row + 1, col, grid, visited);
+
+		//check left
+		revealEmptyCells(row, col - 1, grid, visited);
+
+		//check right
+		revealEmptyCells(row, col + 1, grid, visited);
+	}
+
+	return;
 }
 
 function getRandomNumber(min, max) {
