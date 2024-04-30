@@ -4,6 +4,8 @@ const COL = 9;
 const gameBoard = document.querySelector(".game");
 
 const positionOfBombs = [];
+let gameIsOver = false;
+let revealedCellCount = 0;
 
 window.addEventListener("load", () => {
 	// generate bombs positions randomly
@@ -48,26 +50,36 @@ window.addEventListener("load", () => {
 		cell.addEventListener("click", (e) => {
 			const row = Number(e.target.dataset.row);
 			const col = Number(e.target.dataset.col);
-			if (
-				cell.dataset.condition === "empty" &&
-				!cell.classList.contains("reveal")
-			) {
-				revealEmptyCells(row, col, cells, visited);
-			}
-			if (cell.dataset.condition === "info") {
-				cell.classList.remove("hide");
-			}
-			if (cell.dataset.condition === "bomb") {
-				// reveal all bombs and end game
-				positionOfBombs.forEach((position) =>
-					cells[position].classList.remove("hide")
-				);
+			if (!gameIsOver) {
+				if (cell.dataset.condition === "bomb") {
+					// reveal all bombs and end game
+					positionOfBombs.forEach((position) =>
+						cells[position].classList.remove("hide")
+					);
+					gameIsOver = true;
+				} else {
+					if (
+						cell.dataset.condition === "empty" &&
+						!cell.classList.contains("reveal")
+					) {
+						revealEmptyCells(row, col, cells, visited);
+					}
+					if (
+						cell.dataset.condition === "info" &&
+						cell.classList.contains("hide")
+					) {
+						cell.classList.remove("hide");
+						revealedCellCount++;
+					}
+					console.log(revealedCellCount);
+					gameIsOver = revealedCellCount === 72;
+				}
 			}
 		});
 	});
 });
 
-function generateBombs(bombsNumber = 10) {
+function generateBombs(bombsNumber = 9) {
 	const positionsOfBomb = new Set();
 
 	while (positionsOfBomb.size < bombsNumber) {
@@ -222,6 +234,7 @@ function revealEmptyCells(row, col, grid, visited) {
 		// reveal
 		cell.classList.add("reveal");
 		cell.classList.remove("hide");
+		revealedCellCount++;
 
 		// check top
 		revealEmptyCells(row - 1, col, grid, visited);
